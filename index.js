@@ -1,13 +1,13 @@
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const audioCont = new (window.AudioContext || window.webkitAudioContext)();
 
-const osc1 = audioContext.createOscillator();
+const osc1 = audioCont.createOscillator();
 osc1.type = "sine";
 osc1.frequency.value = 440;
 
-const masterGain = audioContext.createGain();
+const masterGain = audioCont.createGain();
 masterGain.gain.value = 0;
 
-const waveShaper = audioContext.createWaveShaper();
+const waveShaper = audioCont.createWaveShaper();
 
 function makeDistortionCurve(amount) {
   var k = typeof amount === "number" ? amount : 50,
@@ -39,14 +39,14 @@ waveShaper.oversample = "4x";
 
 osc1.connect(waveShaper);
 waveShaper.connect(masterGain);
-masterGain.connect(audioContext.destination);
+masterGain.connect(audioCont.destination);
 
 osc1.start();
 
 document.addEventListener(
   "click",
   () => {
-    audioContext.resume();
+    audioCont.resume();
   },
   { once: true }
 );
