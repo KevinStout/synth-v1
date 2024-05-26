@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Synth-v1</title>
+  </head>
+  <body>
+    <h1>Synth-v1</h1>
+    <label for="masterGain">Master Volume</label>
+    <input
+      type="range"
+      id="masterGain"
+      min="0"
+      max="100"
+      value="0"
+    />
+    <label for="osc1Waveform"></label>
+    <select id="osc1Waveform">
+      <option value="sine">Sine</option>
+      <option value="square">Square</option>
+      <option value="sawtooth">Sawtooth</option>
+      <option value="triangle">Triangle</option>
+    </select>
+    <label for="osc1">Oscillator 1</label>
+    <input
+      type="range"
+      id="osc1"
+      min="0"
+      max="2000"
+      value="440"
+    />
+  </body>
+  <script src="index.js"></script>
+</html>
