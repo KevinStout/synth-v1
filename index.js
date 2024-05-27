@@ -1,52 +1,34 @@
-const audioCont = new (window.AudioContext || window.webkitAudioContext)();
+const audioContext = new AudioContext();
+let osc1;
+const masterGain = audioContext.createGain();
+masterGain.gain.value = 0.5;
 
-const osc1 = audioCont.createOscillator();
-osc1.type = "sine";
-osc1.frequency.value = 440;
-
-const masterGain = audioCont.createGain();
-masterGain.gain.value = 0;
-
-const waveShaper = audioCont.createWaveShaper();
-
-function makeDistortionCurve(amount) {
-  var k = typeof amount === "number" ? amount : 50,
-    n_samples = 44100,
-    curve = new Float32Array(n_samples),
-    deg = Math.PI / 180,
-    i = 0,
-    x;
-  for (; i < n_samples; ++i) {
-    x = (i * 2) / n_samples - 1;
-    curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
-  }
-  return curve;
+function makeOscillator() {
+  osc1 = audioContext.createOscillator();
+  osc1.type = "sine";
+  osc1.frequency.value = document.querySelector("#osc1").value;
+  osc1.connect(masterGain);
+  osc1.start();
 }
 
-// function makeDistortionCurve(amount = 50) {
-//   let n_samples = 44100;
-//   let curve = new Float32Array(n_samples);
-//   let deg = Math.PI / 180;
-//   for (let i = 0; i < n_samples; ++i) {
-//     let x = (i * 2) / n_samples - 1;
-//     curve[i] = ((Math.PI / 2) * x) / (Math.PI / 2 - Math.abs(x) * amount);
-//   }
-//   return curve;
-// }
+masterGain.connect(audioContext.destination);
 
-waveShaper.curve = makeDistortionCurve(0);
-waveShaper.oversample = "4x";
+document.querySelector("#play").addEventListener("mousedown", () => {
+  audioContext.resume();
+  makeOscillator();
+});
 
-osc1.connect(waveShaper);
-waveShaper.connect(masterGain);
-masterGain.connect(audioCont.destination);
-
-osc1.start();
+document.querySelector("#play").addEventListener("mouseup", () => {
+  if (osc1) {
+    osc1.stop();
+    osc1 = null;
+  }
+});
 
 document.addEventListener(
   "click",
   () => {
-    audioCont.resume();
+    audioContext.resume();
   },
   { once: true }
 );
@@ -57,11 +39,15 @@ document.querySelector("#masterGain").addEventListener("input", (e) => {
 });
 
 document.querySelector("#osc1Waveform").addEventListener("change", (e) => {
-  osc1.type = e.target.value;
+  if (!osc1) {
+    osc1.type = e.target.value;
+  }
 });
 
 document.querySelector("#osc1").addEventListener("input", (e) => {
-  osc1.frequency.value = e.target.value;
+  if (osc1) {
+    osc1.frequency.value = e.target.value;
+  }
 });
 
 document.querySelector("#waveShaper").addEventListener("input", (e) => {
