@@ -20,12 +20,20 @@ masterGain.gain.value = 0.5;
 
 // This function creates an oscillator with the frequency passed in and connects it to the masterGain
 function makeOscillator(frequency) {
-  osc1 = audioContext.createOscillator();
-  osc1.type = document.querySelector("#osc1Waveform").value;
-  osc1.frequency.value = frequency;
-  osc1.connect(masterGain);
-  osc1.start();
-  return osc1;
+  const osc = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  const pannerNode = new PannerNode(audioContext, { panningModel: "equalpower" });
+
+  osc.type = document.querySelector("#osc1Waveform").value;
+  osc.frequency.value = frequency;
+  osc.connect(gainNode);
+  gainNode.connect(pannerNode);
+  pannerNode.connect(masterGain);
+  osc.start();
+  // this is smoothing the volume of the oscillator so it doesn't click when it starts
+  gainNode.gain.setValueAtTime(0, audioContext.currentTime); // set the gain to 0
+  gainNode.gain.linearRampToValueAtTime(1, audioContext.currentTime + 0.01); // linearly ramp the gain up to 1 over 0.01 seconds
+  return { osc, gainNode, pannerNode };
 }
 
 masterGain.connect(audioContext.destination);
@@ -49,8 +57,10 @@ document.addEventListener("keydown", (e) => {
 document.addEventListener("keyup", (e) => {
   for (let note of notes) {
     if (e.key === note.key && activeOscillators[note.key]) {
-      activeOscillators[note.key].stop();
-      activeOscillators[note.key] = null;
+      activeOscillators[note.key].gainNode.gain.setValueAtTime(1, audioContext.currentTime); // start at full volume
+      activeOscillators[note.key].gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.01); // ramp to 0 volume over 0.01 seconds
+      activeOscillators[note.key].osc.stop(audioContext.currentTime + 0.02); // stop the oscillator after the volume has ramped down
+      delete activeOscillators[note.key];
     }
   }
 });
@@ -65,10 +75,31 @@ for (let i = 0; i < notes.length; i++) {
     makeOscillator(note.frequency);
   });
   button.addEventListener("mouseup", () => {
-    if (osc1) {
-      osc1.stop();
-      osc1 = null;
+    if (osc) {
+      osc.stop();
+      osc = null;
     }
   });
   document.querySelector("#keyboard").appendChild(button);
 }
+
+// document.querySelector("#pannerSlider").addEventListener("input", (e) => {
+//   const panValue = e.target.value * 0.01;
+//   for (let key in activeOscillators) {
+//     const { pannerNode } = activeOscillators[key];
+//     pannerNode.positionX.setValueAtTime(panValue, audioContext.currentTime);
+//   }
+// });
+
+function animate() {
+  const time = audioContext.currentTime;
+
+  for (let key in activeOscillators) {
+    const { pannerNode } = activeOscillators[key];
+    pannerNode.positionX.setValueAtTime(Math.sin(time), audioContext.currentTime);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+animate();
